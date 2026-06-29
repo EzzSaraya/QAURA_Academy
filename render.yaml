@@ -1,0 +1,26 @@
+databases:
+  - name: qaura-academy-db
+    plan: free
+
+services:
+  - type: web
+    name: qaura-academy
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn qaura_academy.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "qaura.com,www.qaura.com,.onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://qaura.com,https://www.qaura.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: qaura-academy-db
+          property: connectionString

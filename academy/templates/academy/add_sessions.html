@@ -1,0 +1,81 @@
+{% extends 'academy/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card table-card">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Add Weekly Sessions</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <div class="fw-bold fs-5">{{ player.name }}</div>
+                    <div class="text-muted">Code: {{ player.player_id }}</div>
+                    <div class="text-muted">Phone: {% if player.phone_number %}{{ player.phone_number }}{% else %}-{% endif %}</div>
+                    <div class="text-muted">Group: {{ player.group.name }}</div>
+                </div>
+
+                <div class="row g-3 mb-4 text-center">
+                    <div class="col-md-4 col-6">
+                        <div class="p-3 bg-light rounded h-100">
+                            <div class="text-muted small">Total Sessions</div>
+                            <div class="fs-4 fw-bold">{{ player.total_sessions }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="p-3 bg-light rounded h-100">
+                            <div class="text-muted small">Remaining</div>
+                            <div class="fs-4 fw-bold {% if player.remaining_sessions == 0 %}session-zero{% endif %}">{{ player.remaining_sessions }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 col-6">
+                        <div class="p-3 bg-light rounded h-100">
+                            <div class="text-muted small">Current Paid</div>
+                            <div class="fs-5 fw-bold">{{ player.current_plan_paid_amount }} EGP</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-6">
+                        <div class="p-3 bg-light rounded h-100">
+                            <div class="text-muted small">Start Date</div>
+                            <div class="fw-bold">{% if player.plan_first_session_date %}{{ player.plan_first_session_date|date:"d/m/Y" }}{% else %}-{% endif %}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-6">
+                        <div class="p-3 bg-light rounded h-100">
+                            <div class="text-muted small">End Date</div>
+                            <div class="fw-bold">{% if player.plan_end_date %}{{ player.plan_end_date|date:"d/m/Y" }}{% else %}-{% endif %}</div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Number of sessions paid</label>
+                        {{ form.sessions_to_add }}
+                        {% for error in form.sessions_to_add.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+
+
+                    <div class="mb-3">
+                        <label class="form-label">Plan start date</label>
+                        {{ form.start_date }}
+                        {% for error in form.start_date.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'add_sessions_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button class="btn btn-qaura">Add Sessions</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

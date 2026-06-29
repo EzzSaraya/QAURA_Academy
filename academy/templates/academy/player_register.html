@@ -1,0 +1,59 @@
+{% extends 'academy/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+        <div class="card table-card border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <img src="{% static 'img/qaura-logo.png' %}" alt="QAURA Academy logo" class="login-logo mb-3">
+                    <h2 class="fw-bold mb-1">Player Registration</h2>
+                    <p class="text-muted mb-0">Create your player record, choose your group, and save the numeric code generated for you.</p>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="{{ form.name.id_for_label }}">Full Name</label>
+                        {{ form.name }}
+                        {% for error in form.name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+                        {{ form.phone_number }}
+                        {% for error in form.phone_number.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="{{ form.username.id_for_label }}">Username</label>
+                        {{ form.username }}
+                        {% for error in form.username.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" for="{{ form.group.id_for_label }}">Training Group</label>
+                        {{ form.group }}
+                        {% for error in form.group.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-qaura w-100 py-2">Register Player</button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <a href="{% url 'player_login' %}" class="text-decoration-none">Already registered? Login with your code</a>
+                    <div class="mt-2">
+                        <a href="{% url 'player_portal' %}" class="text-decoration-none text-muted">Back to Player Page</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

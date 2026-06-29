@@ -1,0 +1,78 @@
+{% extends 'academy/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="qaura-hero p-4 p-lg-5 mb-4">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <h1 class="mb-2">QAURA Academy Management</h1>
+            <p class="mb-0 opacity-75">Manage attendance, paid sessions, and academy users.</p>
+        </div>
+        <div class="col-lg-5 text-lg-end text-center">
+            <img src="{% static 'img/qaura-logo.png' %}" class="qaura-logo-large" alt="QAURA Academy logo">
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-{% if is_owner_role %}4{% else %}6{% endif %}">
+        <a href="{% url 'attendance' %}" class="text-decoration-none text-dark">
+            <div class="card action-card h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="display-6 mb-3">✅</div>
+                    <h3 class="fw-bold">Take Attendance</h3>
+                    <p class="text-muted mb-4">Select the group, then mark players as Attend or Absent.</p>
+                    <span class="btn btn-qaura">Open Attendance</span>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-{% if is_owner_role %}4{% else %}6{% endif %}">
+        <a href="{% url 'add_sessions_list' %}" class="text-decoration-none text-dark">
+            <div class="card action-card h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="display-6 mb-3">➕</div>
+                    <h3 class="fw-bold">Add Sessions</h3>
+                    <p class="text-muted mb-4">View registered players, edit their data, and add paid sessions.</p>
+                    <span class="btn btn-qaura">Open Players</span>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% if is_owner_role %}
+    <div class="col-md-4">
+        <a href="{% url 'staff_user_list' %}" class="text-decoration-none text-dark">
+            <div class="card action-card h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="display-6 mb-3">👥</div>
+                    <h3 class="fw-bold">Manage Users</h3>
+                    <p class="text-muted mb-4">Create admin and coach accounts from the owner account.</p>
+                    <span class="btn btn-qaura">Open Users</span>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card card-stat p-4">
+            <p class="text-muted mb-1">Total Players</p>
+            <h2 class="mb-0">{{ total_players }}</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-stat p-4">
+            <p class="text-muted mb-1">Active Players</p>
+            <h2 class="mb-0">{{ active_players }}</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-stat p-4">
+            <p class="text-muted mb-1">Players with 0 Sessions</p>
+            <h2 class="mb-0 text-danger">{{ zero_sessions }}</h2>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'academy/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Players & Sessions</h2>
+        <p class="text-muted mb-0">View players, edit details, delete player users, and add paid weekly sessions.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'attendance' %}" class="btn btn-outline-secondary">Take Attendance</a>
+        <a href="{% url 'player_create' %}" class="btn btn-qaura">Add Player</a>
+    </div>
+</div>
+
+<div class="card table-card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-5">
+                <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Search by name, phone, username, or code">
+            </div>
+            <div class="col-md-4">
+                <select name="group" class="form-select">
+                    <option value="">All groups</option>
+                    {% for group in groups %}
+                        <option value="{{ group.id }}" {% if selected_group == group.id|stringformat:'s' %}selected{% endif %}>{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button class="btn btn-qaura flex-fill">Filter</button>
+                <a href="{% url 'add_sessions_list' %}" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card table-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Username</th>
+                    <th>Group</th>
+                    <th>Total</th>
+                    <th>Remaining</th>
+                    <th>Paid Amount</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for player in players %}
+                <tr>
+                    <td><span class="badge badge-soft">{{ player.player_id }}</span></td>
+                    <td>{{ player.name }}</td>
+                    <td>{% if player.phone_number %}{{ player.phone_number }}{% else %}-{% endif %}</td>
+                    <td>{% if player.user %}{{ player.user.username }}{% else %}-{% endif %}</td>
+                    <td>{{ player.group.name }}</td>
+                    <td>
+                        {{ player.total_sessions }}
+                        {% if player.total_sessions == 0 %}<span class="badge bg-warning text-dark ms-1">New</span>{% endif %}
+                    </td>
+                    <td class="{% if player.remaining_sessions == 0 %}session-zero{% endif %}">{{ player.remaining_sessions }}</td>
+                    <td>
+                        {% if player.plan_sessions_count > 0 %}
+                            <strong>{{ player.current_plan_paid_amount }} EGP</strong>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{% if player.plan_first_session_date %}{{ player.plan_first_session_date|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                    <td>{% if player.plan_end_date %}{{ player.plan_end_date|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{% url 'player_add_sessions' player.id %}" class="btn btn-success">Add Sessions</a>
+                            <a href="{% url 'player_update' player.id %}" class="btn btn-outline-primary">Edit</a>
+                            <a href="{% url 'player_delete' player.id %}" class="btn btn-outline-danger">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="11" class="text-center text-muted py-4">No players found.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

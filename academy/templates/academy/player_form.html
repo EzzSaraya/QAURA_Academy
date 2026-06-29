@@ -1,0 +1,145 @@
+{% extends 'academy/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card table-card">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">{{ title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Player Code</label>
+                            {{ form.player_id }}
+                            {% for error in form.player_id.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Player Name</label>
+                            {{ form.name }}
+                            {% for error in form.name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Phone Number</label>
+                            {{ form.phone_number }}
+                            {% for error in form.phone_number.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Username</label>
+                            {{ form.username }}
+                            {% for error in form.username.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Group</label>
+                            {{ form.group }}
+                            {% for error in form.group.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Total Sessions</label>
+                            {{ form.total_sessions }}
+                            {% for error in form.total_sessions.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Remaining Sessions</label>
+                            {{ form.remaining_sessions }}
+                            {% for error in form.remaining_sessions.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Current Plan Sessions</label>
+                            {{ form.plan_sessions_count }}
+                            {% for error in form.plan_sessions_count.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Start Date</label>
+                            {{ form.plan_start_date }}
+                            {% for error in form.plan_start_date.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">End Date (Auto)</label>
+                            {{ form.plan_end_date_manual }}
+                            <div class="form-text">Calculated from start date, group day, and current plan sessions.</div>
+                            {% for error in form.plan_end_date_manual.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label">Active player</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'add_sessions_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button class="btn btn-qaura">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const groupSelect = document.getElementById('id_group');
+    const startInput = document.getElementById('id_plan_start_date');
+    const sessionsInput = document.getElementById('id_plan_sessions_count');
+    const endInput = document.getElementById('id_plan_end_date_manual');
+
+    if (!groupSelect || !startInput || !sessionsInput || !endInput) return;
+
+    function getTargetDayNumber() {
+        const text = groupSelect.options[groupSelect.selectedIndex]?.text.toLowerCase() || '';
+        if (text.includes('monday')) return 1;   // JavaScript: Sunday=0, Monday=1
+        if (text.includes('saturday')) return 6;
+        if (text.includes('sunday')) return 0;
+        if (text.includes('tuesday')) return 2;
+        if (text.includes('wednesday')) return 3;
+        if (text.includes('thursday')) return 4;
+        if (text.includes('friday')) return 5;
+        return null;
+    }
+
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function calculateEndDate() {
+        if (!startInput.value || !sessionsInput.value) {
+            endInput.value = '';
+            return;
+        }
+
+        const sessions = parseInt(sessionsInput.value, 10);
+        const targetDay = getTargetDayNumber();
+        if (!sessions || sessions <= 0 || targetDay === null) {
+            endInput.value = '';
+            return;
+        }
+
+        const firstSession = new Date(startInput.value + 'T00:00:00');
+        const daysUntilGroupDay = (targetDay - firstSession.getDay() + 7) % 7;
+        firstSession.setDate(firstSession.getDate() + daysUntilGroupDay);
+        startInput.value = formatDate(firstSession);
+
+        const endDate = new Date(firstSession);
+        endDate.setDate(firstSession.getDate() + (7 * (sessions - 1)));
+        endInput.value = formatDate(endDate);
+    }
+
+    groupSelect.addEventListener('change', calculateEndDate);
+    startInput.addEventListener('change', calculateEndDate);
+    sessionsInput.addEventListener('input', calculateEndDate);
+    calculateEndDate();
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'academy/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="card table-card border-0 text-center">
+            <div class="card-body p-4 p-md-5">
+                <img src="{% static 'img/qaura-logo.png' %}" alt="QAURA Academy logo" class="login-logo mb-3">
+                <h2 class="fw-bold mb-1">My Sessions</h2>
+                <p class="text-muted mb-4">Welcome, {{ player.name }}.</p>
+
+                <div class="text-muted small text-uppercase fw-semibold mb-2">Your Unique Player Code</div>
+                <div class="alert alert-primary code-box fs-4 py-3 mb-4">{{ player.player_id }}</div>
+
+                <div class="text-muted small text-uppercase fw-semibold mb-2">Remaining Sessions</div>
+                <div class="display-1 fw-bold {% if player.remaining_sessions == 0 %}session-zero{% endif %}">
+                    {{ player.remaining_sessions }}
+                </div>
+
+                <div class="row g-3 mt-4 text-center">
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded h-100">
+                            <div class="text-muted small">Training Group</div>
+                            <div class="fw-bold">{{ player.group.name }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded h-100">
+                            <div class="text-muted small">Paid Amount</div>
+                            <div class="fw-bold">
+                                {% if player.plan_sessions_count > 0 %}{{ player.current_plan_paid_amount }} EGP{% else %}-{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded h-100">
+                            <div class="text-muted small">Start Date</div>
+                            <div class="fw-bold">
+                                {% if player.plan_first_session_date %}{{ player.plan_first_session_date|date:"d/m/Y" }}{% else %}-{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 bg-light rounded h-100">
+                            <div class="text-muted small">End Date</div>
+                            <div class="fw-bold">
+                                {% if player.plan_end_date %}{{ player.plan_end_date|date:"d/m/Y" }}{% else %}-{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if player.plan_session_dates %}
+                    <div class="text-start mt-4">
+                        <h5 class="fw-bold mb-3">Session Dates</h5>
+                        <div class="row g-2">
+                            {% for session_date in player.plan_session_dates %}
+                                <div class="col-sm-6">
+                                    <div class="border rounded p-3 bg-white d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">Session {{ forloop.counter }}</span>
+                                        <strong>{{ session_date|date:"D d/m/Y" }}</strong>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if player.total_sessions == 0 %}
+                    <div class="alert alert-warning mt-4 mb-0">
+                        Your account is registered, but the admin has not added your paid sessions yet.
+                    </div>
+                {% elif player.remaining_sessions == 0 %}
+                    <div class="alert alert-danger mt-4 mb-0">
+                        Your current sessions finished. After renewal, the admin will add a new start date and the new weekly session dates will appear here.
+                    </div>
+                {% endif %}
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                    <a href="{% url 'player_logout' %}" class="btn btn-outline-secondary px-4">Logout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'academy/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+        <div class="card table-card border-0 p-4 p-md-5 mt-5 text-center">
+            <img src="{% static 'img/qaura-logo.png' %}" class="login-logo mx-auto mb-4" alt="QAURA Academy logo">
+            <h2 class="fw-bold mb-2">Player Page</h2>
+            <p class="text-muted mb-4">Register as a player or login with your numeric player code to check your remaining sessions.</p>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <a href="{% url 'player_self_register' %}" class="btn btn-qaura w-100 py-3 fw-semibold">
+                        Register as Player
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <a href="{% url 'player_login' %}" class="btn btn-outline-primary w-100 py-3 fw-semibold">
+                        Login with Code
+                    </a>
+                </div>
+            </div>
+
+            <div class="alert alert-light border mt-4 mb-0 text-start">
+                <strong>Note:</strong> After registration, the system gives you a numeric unique player code. Use this code only to login. The admin/coach adds paid sessions after payment.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

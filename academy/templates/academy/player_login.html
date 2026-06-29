@@ -1,0 +1,32 @@
+{% extends 'academy/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card table-card p-4 mt-5">
+            <div class="text-center mb-4">
+                <img src="{% static 'img/qaura-logo.png' %}" class="login-logo mb-3" alt="QAURA Academy logo">
+                <h3 class="mt-2">Player Login</h3>
+                <p class="text-muted mb-0">Enter your numeric player code only.</p>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="{{ form.player_code.id_for_label }}">Player Code</label>
+                    {{ form.player_code }}
+                    {% for error in form.player_code.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    <div class="form-text">Example: 100, 101, 102</div>
+                </div>
+                <button class="btn btn-qaura w-100">Login with Code</button>
+            </form>
+            <hr>
+            <div class="d-grid gap-2">
+                <a href="{% url 'player_self_register' %}" class="btn btn-outline-primary">Create Player Account</a>
+                <a href="{% url 'player_portal' %}" class="btn btn-outline-secondary">Back to Player Page</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
