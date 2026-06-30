@@ -1,4 +1,4 @@
-# QAURA Academy Attendance System
+# QAURA Academy System
 
 Django website for QAURA Academy to manage player registration, weekly paid sessions, coach attendance, numeric player codes, and separated Owner/Admin/Coach/Player access.
 
