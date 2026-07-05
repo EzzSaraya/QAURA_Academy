@@ -1,5 +1,7 @@
 """Forms for player, paid-session, and staff-user workflows."""
 
+import code
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -68,15 +70,28 @@ class PlayerForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Player codes are generated automatically by the system.
+        self.fields['player_id'].required = False
+        self.fields['player_id'].disabled = True
+        self.fields['player_id'].help_text = (
+        'Generated automatically. If a player is deleted, their code becomes available again.'
+        )
+
+        if not (self.instance and self.instance.pk):
+            self.fields['player_id'].initial = 'Auto generated'
         self.fields['plan_end_date_manual'].disabled = True
         self.fields['plan_end_date_manual'].help_text = (
             'End date is calculated automatically from start date, group day, and current plan sessions.'
         )
         if self.instance and self.instance.pk and self.instance.user:
             self.fields['username'].initial = self.instance.user.username
-
     def clean_player_id(self):
-        return self.cleaned_data['player_id'].strip()
+        code = self.cleaned_data.get('player_id', '')
+
+        if code == 'Auto generated':
+            return ''
+
+        return str(code).strip()
 
     def clean_phone_number(self):
         return self.cleaned_data.get('phone_number', '').strip()
@@ -122,6 +137,8 @@ class PlayerForm(forms.ModelForm):
     def save(self, commit=True):
         player = super().save(commit=False)
         username = self.cleaned_data['username']
+        if not player.player_id or player.player_id == 'Auto generated':
+            player.player_id = generate_unique_player_code()
 
         with transaction.atomic():
             if player.user:

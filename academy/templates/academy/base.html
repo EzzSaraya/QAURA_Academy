@@ -55,9 +55,10 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                 {% if is_admin_role %}
-                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Admin Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'attendance' %}">Take Attendance</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'add_sessions_list' %}">Add Sessions</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Admin Home</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'attendance' %}">Take Attendance</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'player_create' %}">Create Player</a></li>
+                   <li class="nav-item"><a class="nav-link" href="{% url 'add_sessions_list' %}">Add Sessions</a></li>
                     {% if is_owner_role %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'staff_user_list' %}">Manage Users</a></li>
                     {% endif %}
@@ -80,7 +81,7 @@
                     <li class="nav-item"><a class="btn btn-outline-light btn-sm" href="{% url 'player_logout' %}">Logout</a></li>
                 {% else %}
                     {% if request.resolver_match.url_name == 'player_portal' or request.resolver_match.url_name == 'player_login' or request.resolver_match.url_name == 'player_self_register' or request.resolver_match.url_name == 'player_sessions' %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'player_self_register' %}">Player Register</a></li>
+                       
                         <li class="nav-item"><a class="nav-link" href="{% url 'player_login' %}">Player Login</a></li>
                     {% endif %}
                 {% endif %}

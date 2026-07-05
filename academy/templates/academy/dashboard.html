@@ -15,7 +15,7 @@
 </div>
 
 <div class="row g-4 mb-4">
-    <div class="col-md-{% if is_owner_role %}4{% else %}6{% endif %}">
+    <div class="col-md-{% if is_owner_role %}3{% else %}4{% endif %}">
         <a href="{% url 'attendance' %}" class="text-decoration-none text-dark">
             <div class="card action-card h-100">
                 <div class="card-body p-4 p-lg-5">
@@ -27,20 +27,35 @@
             </div>
         </a>
     </div>
-    <div class="col-md-{% if is_owner_role %}4{% else %}6{% endif %}">
+
+    <div class="col-md-{% if is_owner_role %}3{% else %}4{% endif %}">
+        <a href="{% url 'player_create' %}" class="text-decoration-none text-dark">
+            <div class="card action-card h-100">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="display-6 mb-3">👤</div>
+                    <h3 class="fw-bold">Create Player</h3>
+                    <p class="text-muted mb-4">Create a player user and generate their numeric code automatically.</p>
+                    <span class="btn btn-qaura">Create Player</span>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-{% if is_owner_role %}3{% else %}4{% endif %}">
         <a href="{% url 'add_sessions_list' %}" class="text-decoration-none text-dark">
             <div class="card action-card h-100">
                 <div class="card-body p-4 p-lg-5">
                     <div class="display-6 mb-3">➕</div>
                     <h3 class="fw-bold">Add Sessions</h3>
-                    <p class="text-muted mb-4">View registered players, edit their data, and add paid sessions.</p>
+                    <p class="text-muted mb-4">View players, edit their data, and add paid sessions.</p>
                     <span class="btn btn-qaura">Open Players</span>
                 </div>
             </div>
         </a>
     </div>
+
     {% if is_owner_role %}
-    <div class="col-md-4">
+    <div class="col-md-3">
         <a href="{% url 'staff_user_list' %}" class="text-decoration-none text-dark">
             <div class="card action-card h-100">
                 <div class="card-body p-4 p-lg-5">

@@ -15,14 +15,25 @@ from .models import Attendance, Player
 
 
 def generate_unique_player_code():
-    """Generate numeric player codes: 100, 101, 102..."""
-    numeric_codes = []
+    """
+    Generate the smallest available numeric player code starting from 100.
+
+    Example:
+    Existing codes: 100, 101, 102
+    If player 101 is deleted, the next created player gets 101 again.
+    """
+    used_codes = set()
+
     for code in Player.objects.values_list('player_id', flat=True):
         if code and str(code).isdigit():
-            numeric_codes.append(int(code))
-    next_code = max(numeric_codes, default=FIRST_PLAYER_CODE - 1) + 1
-    return str(next_code)
+            used_codes.add(int(code))
 
+    next_code = FIRST_PLAYER_CODE
+
+    while next_code in used_codes:
+        next_code += 1
+
+    return str(next_code)
 
 def calculate_weekly_plan_dates(player, selected_start_date, sessions_count):
     """Return first session, end date, and all weekly dates for a player's group."""

@@ -149,26 +149,12 @@ def player_login(request):
 
 
 def player_self_register(request):
-    if request.user.is_authenticated:
-        return redirect('post_login_redirect')
-    if request.session.get(PLAYER_SESSION_KEY):
-        return redirect('player_sessions')
-
-    if request.method == 'POST':
-        form = PlayerSelfRegistrationForm(request.POST)
-        if form.is_valid():
-            player = form.save()
-            request.session[PLAYER_SESSION_KEY] = player.id
-            request.session.modified = True
-            messages.success(
-                request,
-                f'Registration successful. Your unique player code is {player.player_id}. Save this code. You will use this code only to login as a player.'
-            )
-            return redirect('player_sessions')
-    else:
-        form = PlayerSelfRegistrationForm()
-
-    return render(request, 'academy/player_register.html', {'form': form})
+    """Player self-registration is disabled. Admins create player users."""
+    messages.info(
+        request,
+        'Player registration is handled by the academy admin. Please login using your player code.'
+    )
+    return redirect('player_login')
 
 
 def player_sessions(request):
@@ -257,9 +243,17 @@ def player_create(request):
             messages.success(request, 'Player added successfully.')
             return redirect('add_sessions_list')
     else:
-        form = PlayerForm(initial={'is_active': True})
+        form = PlayerForm(initial={
+            'is_active': True,
+            'total_sessions': 0,
+            'remaining_sessions': 0,
+            'plan_sessions_count': 0,
+        })
 
-    return render(request, 'academy/player_form.html', {'form': form, 'title': 'Add Player'})
+    return render(request, 'academy/player_form.html', {
+        'form': form,
+        'title': 'Create Player User'
+    })
 
 
 @admin_required
@@ -306,8 +300,10 @@ def player_delete(request, pk):
     if request.method == 'POST':
         linked_user = player.user
         player.delete()
+
         if linked_user:
             linked_user.delete()
+
         messages.success(request, 'Player and linked player user deleted successfully.')
         return redirect('add_sessions_list')
 
