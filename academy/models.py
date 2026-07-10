@@ -33,22 +33,74 @@ class Player(models.Model):
         blank=True,
         help_text='The login account used by the player.',
     )
-    player_id = models.CharField(max_length=50, unique=True, verbose_name='Player Code')
+
+    player_id = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name='Player Code',
+    )
+
     name = models.CharField(max_length=150)
-    group = models.ForeignKey(TrainingGroup, on_delete=models.PROTECT, related_name='players')
-    total_sessions = models.PositiveIntegerField(validators=[MinValueValidator(0)])
-    remaining_sessions = models.PositiveIntegerField(validators=[MinValueValidator(0)])
-    phone_number = models.CharField(max_length=30, blank=True, default='', verbose_name='Phone Number')
-    plan_start_date = models.DateField(null=True, blank=True, verbose_name='Current Plan Start Date')
-    plan_end_date_manual = models.DateField(null=True, blank=True, verbose_name='Current Plan End Date')
-    plan_sessions_count = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)], verbose_name='Current Plan Sessions')
+
+    phone_number = models.CharField(
+        max_length=30,
+        blank=True,
+        default='',
+        verbose_name='Phone Number',
+    )
+
+    group = models.ForeignKey(
+        TrainingGroup,
+        on_delete=models.PROTECT,
+        related_name='players',
+        verbose_name='Primary Group',
+    )
+
+    secondary_group = models.ForeignKey(
+        TrainingGroup,
+        on_delete=models.PROTECT,
+        related_name='secondary_players',
+        null=True,
+        blank=True,
+        verbose_name='Secondary Group',
+    )
+
+    total_sessions = models.PositiveIntegerField(
+        validators=[MinValueValidator(0)],
+    )
+
+    remaining_sessions = models.PositiveIntegerField(
+        validators=[MinValueValidator(0)],
+    )
+
+    plan_start_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Current Plan Start Date',
+    )
+
+    plan_end_date_manual = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Current Plan End Date',
+    )
+
+    plan_sessions_count = models.PositiveIntegerField(
+        default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name='Current Plan Sessions',
+    )
+
     is_active = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['name']
 
+    def __str__(self):
+        return f'{self.player_id} - {self.name}'
 
     @staticmethod
     def _weekday_number(day_name):
@@ -69,52 +121,152 @@ class Player(models.Model):
         """Move start_date forward to the next date that matches the group day."""
         if not start_date:
             return None
+
         target_weekday = Player._weekday_number(day_name)
+
         if target_weekday is None:
             return start_date
+
         days_until_group_day = (target_weekday - start_date.weekday()) % 7
         return start_date + timedelta(days=days_until_group_day)
 
     @property
-    def plan_first_session_date(self):
-        """The first actual training date, adjusted to the player's group day."""
-        if not self.plan_start_date:
-            return None
-        group_day = self.group.day if self.group_id else None
-        return self.align_date_to_weekday(self.plan_start_date, group_day)
+    def enrolled_groups(self):
+        """
+        Return all groups the player is registered in.
+
+        Example:
+        - Monday only
+        - Saturday only
+        - Monday + Saturday
+        """
+        groups = []
+
+        if self.group:
+            groups.append(self.group)
+
+        if self.secondary_group and self.secondary_group_id != self.group_id:
+            groups.append(self.secondary_group)
+
+        return groups
 
     @property
-    def current_plan_paid_amount(self):
-        return self.plan_sessions_count * self.PRICE_PER_SESSION
+    def group_display(self):
+        """Display one group or both groups nicely in templates."""
+        groups = self.enrolled_groups
 
-    @property
-    def total_paid_amount(self):
-        return self.total_sessions * self.PRICE_PER_SESSION
+        if not groups:
+            return 'No group'
 
-    @property
-    def computed_plan_end_date(self):
-        if not self.plan_start_date or self.plan_sessions_count <= 0:
-            return None
-        first_session_date = self.plan_first_session_date
-        if not first_session_date:
-            return None
-        return first_session_date + timedelta(days=7 * (self.plan_sessions_count - 1))
-
-    @property
-    def plan_end_date(self):
-        return self.plan_end_date_manual or self.computed_plan_end_date
+        return ' + '.join(group.name for group in groups)
 
     @property
     def plan_session_dates(self):
-        if not self.plan_start_date or self.plan_sessions_count <= 0:
+        """
+        Return the current plan session dates.
+
+        If player is in one group:
+        dates follow that group weekly.
+
+        If player is in both groups:
+        dates follow both group days chronologically.
+
+        Example:
+        Monday + Saturday, 4 sessions:
+        Monday, Saturday, Monday, Saturday
+        """
+        if not self.plan_start_date or not self.plan_sessions_count:
             return []
-        first_session_date = self.plan_first_session_date
-        if not first_session_date:
-            return []
-        return [first_session_date + timedelta(days=7 * index) for index in range(self.plan_sessions_count)]
+
+        from .services import calculate_session_dates
+
+        return calculate_session_dates(
+            self.plan_start_date,
+            self.plan_sessions_count,
+            self.enrolled_groups,
+        )
+
+    @property
+    def plan_first_session_date(self):
+        """The first actual session date in the current plan."""
+        session_dates = self.plan_session_dates
+
+        if not session_dates:
+            return None
+
+        return session_dates[0]
+
+    @property
+    def computed_plan_end_date(self):
+        """The last actual session date in the current plan."""
+        session_dates = self.plan_session_dates
+
+        if not session_dates:
+            return None
+
+        return session_dates[-1]
+
+    @property
+    def plan_end_date(self):
+        """Return manually saved end date, or calculate it if missing."""
+        return self.plan_end_date_manual or self.computed_plan_end_date
+
+    @property
+    def current_plan_paid_amount(self):
+        """
+        Calculate paid amount automatically from the current plan sessions.
+
+        Example:
+        4 sessions = 1500 EGP
+        8 sessions = 3000 EGP
+        """
+        sessions_count = self.plan_sessions_count or 0
+        return sessions_count * self.PRICE_PER_SESSION
+
+    @property
+    def total_paid_amount(self):
+        """Calculate total paid amount from all total sessions."""
+        return self.total_sessions * self.PRICE_PER_SESSION
+
+
+
+class SessionPayment(models.Model):
+    player = models.ForeignKey(
+        Player,
+        on_delete=models.CASCADE,
+        related_name='session_payments',
+    )
+
+    sessions_count = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+    )
+
+    amount_egp = models.PositiveIntegerField(
+        validators=[MinValueValidator(0)],
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_session_payments',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f'{self.name} ({self.player_id})'
+        return f'{self.player.name} - {self.sessions_count} sessions - {self.amount_egp} EGP'
+
+
+
+
+
+
+
 
 
 class Attendance(models.Model):
@@ -126,18 +278,42 @@ class Attendance(models.Model):
         (ABSENT, 'Absent'),
     ]
 
-    player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='attendance_records')
-    group = models.ForeignKey(TrainingGroup, on_delete=models.PROTECT, related_name='attendance_records')
+    player = models.ForeignKey(
+        Player,
+        on_delete=models.CASCADE,
+        related_name='attendance_records',
+    )
+
+    group = models.ForeignKey(
+        TrainingGroup,
+        on_delete=models.PROTECT,
+        related_name='attendance_records',
+    )
+
     date = models.DateField(default=timezone.localdate)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-date', 'player__name']
         constraints = [
-            models.UniqueConstraint(fields=['player', 'date'], name='one_attendance_per_player_per_day')
+            models.UniqueConstraint(
+                fields=['player', 'date'],
+                name='one_attendance_per_player_per_day',
+            )
         ]
 
     def __str__(self):

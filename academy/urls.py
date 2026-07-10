@@ -21,4 +21,5 @@ urlpatterns = [
     path('owner/users/<int:pk>/delete/', views.staff_user_delete, name='staff_user_delete'),
     path('attendance/', views.attendance_page, name='attendance'),
     path('history/', views.attendance_history, name='attendance_history'),
+    path('owner/income/', views.income_report, name='income_report'),
 ]

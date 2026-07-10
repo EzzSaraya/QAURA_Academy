@@ -4,7 +4,9 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="mb-1">Take Attendance</h2>
-        <p class="text-muted mb-0">Mark players as attend or absent. Attend deducts one session.</p>
+        <p class="text-muted mb-0">
+            Mark players as attend or absent. Both attend and absent deduct one session.
+        </p>
     </div>
 </div>
 
@@ -13,28 +15,66 @@
         <form method="get" class="row g-2 align-items-end">
             <div class="col-md-5">
                 <label class="form-label">Group</label>
-                <select name="group" class="form-select">
+                <select name="group" class="form-select" required>
+                    <option value="">Select group</option>
                     {% for group in groups %}
-                        <option value="{{ group.id }}" {% if selected_group_id == group.id|stringformat:'s' %}selected{% endif %}>{{ group.name }} - {{ group.day }} {{ group.time|time:"g:i A" }}</option>
+                        <option value="{{ group.id }}" {% if selected_group_id == group.id|stringformat:'s' %}selected{% endif %}>
+                            {{ group.name }} - {{ group.day }} {{ group.time|time:"g:i A" }}
+                        </option>
                     {% endfor %}
                 </select>
             </div>
+
             <div class="col-md-4">
-                <label class="form-label">Date</label>
-                <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control">
+                <label class="form-label">Session Date</label>
+                <select name="date" class="form-select">
+                    <option value="">Select session date</option>
+
+                    {% for session_date in valid_session_dates %}
+                        <option value="{{ session_date|date:'Y-m-d' }}"
+                            {% if selected_date == session_date %}selected{% endif %}
+                        >
+                            {{ session_date|date:"D d/m/Y" }}
+                        </option>
+                    {% empty %}
+                        <option value="" disabled>No session dates available</option>
+                    {% endfor %}
+                </select>
             </div>
+
             <div class="col-md-3">
                 <button class="btn btn-qaura w-100">Load Group</button>
             </div>
         </form>
-    </div>
-</div>
 
+     {% if selected_group and not can_take_attendance %}
+    <div class="alert alert-warning mt-3 mb-0">
+        {% if attendance_warning %}
+            {{ attendance_warning }}
+        {% else %}
+            Please select today’s valid session date before taking attendance.
+        {% endif %}
+    </div>
+{% endif %}
 <div class="card table-card">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <strong>{% if selected_group %}{{ selected_group.name }}{% else %}No group selected{% endif %}</strong>
-        <span class="text-muted">{{ selected_date }}</span>
+        <strong>
+            {% if selected_group %}
+                {{ selected_group.name }}
+            {% else %}
+                No group loaded
+            {% endif %}
+        </strong>
+
+        <span class="text-muted">
+            {% if selected_date %}
+                {{ selected_date|date:"D d/m/Y" }}
+            {% else %}
+                No session date selected
+            {% endif %}
+        </span>
     </div>
+
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
@@ -46,51 +86,96 @@
                     <th class="text-end">Action</th>
                 </tr>
             </thead>
+
             <tbody>
             {% for row in attendance_rows %}
                 <tr>
-                    <td><span class="badge badge-soft">{{ row.player.player_id }}</span></td>
-                    <td>{{ row.player.name }}</td>
-                    <td class="{% if row.player.remaining_sessions == 0 %}session-zero{% endif %}">{{ row.player.remaining_sessions }}</td>
                     <td>
-                        {% if row.status == 'attend' %}
+                        <span class="badge badge-soft">{{ row.player.player_id }}</span>
+                    </td>
+
+                    <td>
+                        <div class="fw-semibold">{{ row.player.name }}</div>
+                        <div class="text-muted small">{{ row.player.group_display }}</div>
+                    </td>
+
+                    <td class="{% if row.player.remaining_sessions == 0 %}session-zero{% endif %}">
+                        {{ row.player.remaining_sessions }}
+                    </td>
+
+                    <td>
+                        {% if not can_take_attendance %}
+                            <span class="badge bg-secondary">Load Group and Date First</span>
+
+                        {% elif not row.has_session_on_selected_date %}
+                            <span class="badge bg-secondary">No Session This Date</span>
+
+                        {% elif row.status == 'attend' %}
                             <span class="badge bg-success">Attend</span>
+
                         {% elif row.status == 'absent' %}
-                            <span class="badge bg-secondary">Absent</span>
+                            <span class="badge bg-danger">Absent</span>
+
                         {% else %}
                             <span class="badge bg-warning text-dark">Not marked</span>
                         {% endif %}
                     </td>
+
                     <td class="text-end">
-                        <div class="d-inline-flex gap-2">
-                            <form method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="group" value="{{ selected_group_id }}">
-                                <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
-                                <input type="hidden" name="player_id" value="{{ row.player.id }}">
-                                <input type="hidden" name="status" value="attend">
-                                {% if row.player.remaining_sessions == 0 and row.status != 'attend' %}
-                                    <button class="btn btn-sm btn-secondary" disabled>No Sessions</button>
-                                {% else %}
-                                    <button class="btn btn-sm btn-success">Attend</button>
+                        <div class="d-inline-flex gap-2 align-items-center">
+
+                            {% if not can_take_attendance %}
+                                <button class="btn btn-sm btn-secondary" disabled>
+                                    Select Date First
+                                </button>
+
+                            {% elif not row.has_session_on_selected_date %}
+                                <span class="badge bg-secondary">No Session This Date</span>
+
+                            {% elif row.player.remaining_sessions == 0 and not row.status %}
+                                <button class="btn btn-sm btn-secondary" disabled>
+                                    No Sessions
+                                </button>
+
+                                {% if user.is_superuser %}
+                                    <a href="{% url 'player_add_sessions' row.player.id %}" class="btn btn-sm btn-outline-success">
+                                        Add Sessions
+                                    </a>
                                 {% endif %}
-                            </form>
-                            <form method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="group" value="{{ selected_group_id }}">
-                                <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
-                                <input type="hidden" name="player_id" value="{{ row.player.id }}">
-                                <input type="hidden" name="status" value="absent">
-                                <button class="btn btn-sm btn-outline-secondary">Absent</button>
-                            </form>
-                            {% if user.is_superuser and row.player.remaining_sessions == 0 and row.status != 'attend' %}
-                                <a href="{% url 'player_add_sessions' row.player.id %}" class="btn btn-sm btn-outline-success">Add Sessions</a>
+
+                            {% else %}
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="group" value="{{ selected_group.id }}">
+                                    <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                    <input type="hidden" name="player_id" value="{{ row.player.id }}">
+                                    <input type="hidden" name="status" value="attend">
+                                    <button class="btn btn-sm btn-success">Attend</button>
+                                </form>
+
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="group" value="{{ selected_group.id }}">
+                                    <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                                    <input type="hidden" name="player_id" value="{{ row.player.id }}">
+                                    <input type="hidden" name="status" value="absent">
+                                    <button class="btn btn-sm btn-outline-danger">Absent</button>
+                                </form>
                             {% endif %}
+
                         </div>
                     </td>
                 </tr>
             {% empty %}
-                <tr><td colspan="5" class="text-center text-muted py-4">No active players in this group.</td></tr>
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        {% if selected_group %}
+                            No active players in this group.
+                        {% else %}
+                            Please select a group and click Load Group.
+                        {% endif %}
+                    </td>
+                </tr>
             {% endfor %}
             </tbody>
         </table>

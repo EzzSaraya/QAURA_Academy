@@ -59,7 +59,7 @@
                     <td>{{ player.name }}</td>
                     <td>{% if player.phone_number %}{{ player.phone_number }}{% else %}-{% endif %}</td>
                     <td>{% if player.user %}{{ player.user.username }}{% else %}-{% endif %}</td>
-                    <td>{{ player.group.name }}</td>
+                    <td>{{ player.group_display }}</td>
                     <td>
                         {{ player.total_sessions }}
                         {% if player.total_sessions == 0 %}<span class="badge bg-warning text-dark ms-1">New</span>{% endif %}

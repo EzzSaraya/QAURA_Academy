@@ -22,7 +22,7 @@
                     <div class="col-md-3">
                         <div class="p-3 bg-light rounded h-100">
                             <div class="text-muted small">Training Group</div>
-                            <div class="fw-bold">{{ player.group.name }}</div>
+                            <div class="fw-bold">{{ player.group_display }}</div>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -51,21 +51,32 @@
                     </div>
                 </div>
 
-                {% if player.plan_session_dates %}
-                    <div class="text-start mt-4">
-                        <h5 class="fw-bold mb-3">Session Dates</h5>
-                        <div class="row g-2">
-                            {% for session_date in player.plan_session_dates %}
-                                <div class="col-sm-6">
-                                    <div class="border rounded p-3 bg-white d-flex justify-content-between align-items-center">
-                                        <span class="text-muted">Session {{ forloop.counter }}</span>
-                                        <strong>{{ session_date|date:"D d/m/Y" }}</strong>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                {% if session_progress %}
+    <div class="text-start mt-4">
+        <h5 class="fw-bold mb-3">Session Dates</h5>
+
+        <div class="row g-2">
+            {% for session in session_progress %}
+                <div class="col-sm-6">
+                    <div class="border rounded p-3 bg-white d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Session {{ session.number }}</div>
+                            <div class="text-muted small">{{ session.date|date:"D d/m/Y" }}</div>
                         </div>
+
+                        {% if session.status == 'attend' %}
+    <span class="badge bg-success fs-6">✓ Attend</span>
+{% elif session.status == 'absent' %}
+    <span class="badge bg-danger fs-6">✕ Absent</span>
+{% else %}
+    <span class="badge bg-warning text-dark fs-6">Pending</span>
+{% endif %}
                     </div>
-                {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
 
                 {% if player.total_sessions == 0 %}
                     <div class="alert alert-warning mt-4 mb-0">
